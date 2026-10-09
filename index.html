@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07552e">
+<title>GroceryHub | Fresh & Fast</title>
+<style>
+:root{--g:#07552e;--l:#9aef40;--bg:#f4f8f2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#183322;font-family:Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:10px;padding:11px;cursor:pointer;font-weight:bold}
+.primary{background:var(--g);color:white}
+header{background:var(--g);color:white;padding:15px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:900}
+.brand span{color:var(--l)}
+.logo{display:inline-grid;place-items:center;width:43px;height:43px;border:2px solid var(--l);border-radius:50%;margin-right:7px}
+.search{display:flex;padding:12px;gap:8px;background:white}
+input,select,textarea{padding:12px;border:1px solid #d3ded1;border-radius:9px;min-width:0;width:100%;background:white}
+main{max-width:1100px;margin:auto;padding:16px}
+.hero{background:linear-gradient(120deg,#064321,#188348);color:white;padding:24px;border-radius:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.hero h1{font-size:clamp(27px,6vw,42px);margin:0}
+.hero .art{font-size:55px}
+h2{font-size:22px;margin-top:25px}
+.categories{display:flex;gap:8px;overflow:auto;padding:5px 0 12px}
+.categories button{white-space:nowrap;background:white;color:var(--g);border:1px solid #d5e3d0}
+.categories button.active{background:var(--g);color:white}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.card,.panel{background:white;padding:12px;border:1px solid #e0e8dd;border-radius:14px;margin-bottom:10px}
+.pic{height:85px;display:grid;place-items:center;font-size:48px;background:#eff8e9;border-radius:10px}
+.card h3{font-size:15px;margin:10px 0 5px}
+.muted{font-size:12px;color:#6c7a6d}
+.price{font-weight:bold;font-size:17px;margin:9px 0}
+.add{width:100%;background:#e2f5d7;color:#07552e}
+.hidden{display:none!important}
+.line{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #e5ebe2}
+.line .desc{flex:1}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{background:#e4f4da;padding:8px 12px}
+.total{display:flex;justify-content:space-between;margin:13px 0}
+.stack{display:grid;gap:12px}
+.notice{background:#e6f5df;padding:12px;border-radius:9px}
+.error{color:#b42318;font-size:13px}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #dce5d8;display:flex;justify-content:space-around;padding:8px 3px calc(8px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;background:white;color:#34533b;font-size:12px;padding:9px 2px}
+nav button.active{background:#e5f5dc}
+footer{text-align:center;padding:25px 0 65px;color:#6b786b;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{padding:8px;border-bottom:1px solid #e0e8dd;text-align:left}
+.tablewrap{overflow-x:auto}
+@media(min-width:600px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<div class="brand"><span class="logo">🛒</span>Grocery<span>Hub</span></div>
+<button style="background:#9aef40;color:#12351e" onclick="go('cart')">🛒 Cart <b id="count">0</b></button>
+</header>
+<div class="search">
+<input id="search" placeholder="🔎 Search 144 groceries..." oninput="render()">
+<button class="primary" onclick="render()">Search</button>
+</div>
+<main>
+<section id="home">
+<div class="hero">
+<div><h1>Fresh groceries.<br>Happy home. 💚</h1><p>Everyday essentials, all in one place.</p><button onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop now →</button></div>
+<div class="art">🥬🍅🥛</div>
+</div>
+<h2>Shop by category</h2>
+<div id="cats" class="categories"></div>
+<h2>Fresh picks <span id="result" class="muted"></span></h2>
+<div id="products" class="grid"></div>
+</section>
+<section id="cart" class="hidden">
+<h2>🛒 Your cart</h2><div class="panel" id="cartItems"></div>
+<div class="panel">
+<div class="total"><span>Subtotal</span><b id="sub">₹0</b></div>
+<div class="total"><span>Delivery</span><b id="fee">₹0</b></div>
+<div class="total"><b>Total</b><b id="grand">₹0</b></div>
+<p class="muted">Free delivery on orders of ₹499 or more.</p>
+<button class="primary" style="width:100%" onclick="go('checkout')">Checkout →</button>
+</div>
+</section>
+<section id="checkout" class="hidden">
+<h2>📦 Delivery details</h2>
+<div class="panel stack">
+<label>Name<input id="name" placeholder="Full name" autocomplete="name"></label>
+<label>Mobile<input id="phone" placeholder="10-digit Indian mobile" inputmode="numeric" maxlength="10" autocomplete="tel"></label>
+<label>Address<textarea id="address" rows="3" placeholder="House, street, area, city and PIN code" autocomplete="street-address"></textarea></label>
+<label>Instructions (optional)<input id="note" placeholder="Landmark or delivery note"></label>
+<label>Payment<select id="payment"><option>Cash on delivery (demo)</option></select></label>
+<div id="error" class="error"></div>
+<button class="primary" onclick="placeOrder()">Place demo order</button>
+<p class="muted">Demo only. No real payment or delivery service is connected.</p>
+</div>
+</section>
+<section id="orders" class="hidden"><h2>📋 My orders</h2><div id="orderList"></div></section>
+<section id="admin" class="hidden">
+<h2>⚙️ GroceryHub Admin</h2>
+<div class="notice">Demo admin only. No secure admin login yet. Do not use this version for real customer data.</div>
+<div class="grid">
+<div class="panel">Products<h2 id="pc">144</h2></div>
+<div class="panel">Orders<h2 id="oc">0</h2></div>
+<div class="panel">Order value<h2 id="sales">₹0</h2></div>
+</div>
+<div class="panel stack">
+<h3>Add product</h3><input id="nn" placeholder="Product name">
+<div style="display:flex;gap:8px"><input id="np" type="number" min="1" placeholder="Price ₹"><input id="nu" placeholder="Unit e.g. 500 g"></div>
+<select id="nc"></select><button class="primary" onclick="addProduct()">Add product</button>
+</div>
+<div class="panel"><h3>Edit price and stock</h3><input id="as" placeholder="Search products" oninput="renderAdmin()"><div class="tablewrap"><table><thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Save</th></tr></thead><tbody id="at"></tbody></table></div></div>
+<div class="panel"><h3>Order management</h3><div id="ao"></div></div>
+<button onclick="resetDemo()">Reset demo data</button>
+</section>
+<footer>GroceryHub · Fresh · Fast · At Your Door</footer>
+</main>
+<nav>
+<button class="active" data-p="home" onclick="go('home')">🏠<br>Home</button>
+<button data-p="cart" onclick="go('cart')">🛒<br>Cart</button>
+<button data-p="orders" onclick="go('orders')">📦<br>Orders</button>
+<button data-p="admin" onclick="go('admin')">⚙️<br>Admin</button>
+</nav>
+<script>
+const raw={
+"Fruits":[["Apple","🍎",160,"1 kg"],["Banana","🍌",50,"1 dozen"],["Orange","🍊",90,"1 kg"],["Mango","🥭",120,"1 kg"],["Grapes","🍇",100,"500 g"],["Papaya","🍈",60,"1 pc"],["Pomegranate","🍎",140,"1 kg"],["Guava","🍐",70,"1 kg"],["Watermelon","🍉",45,"1 pc"],["Pineapple","🍍",75,"1 pc"],["Pear","🍐",130,"1 kg"],["Kiwi","🥝",35,"1 pc"]],
+"Vegetables":[["Potato","🥔",35,"1 kg"],["Onion","🧅",40,"1 kg"],["Tomato","🍅",45,"1 kg"],["Carrot","🥕",50,"500 g"],["Broccoli","🥦",80,"1 pc"],["Cauliflower","🥦",45,"1 pc"],["Spinach","🥬",25,"1 bunch"],["Cucumber","🥒",35,"500 g"],["Capsicum","🫑",50,"500 g"],["Brinjal","🍆",40,"500 g"],["Green Peas","🫛",60,"500 g"],["Garlic","🧄",45,"250 g"]],
+"Dairy & Eggs":[["Milk","🥛",35,"500 ml"],["Curd","🥣",40,"400 g"],["Paneer","🧀",90,"200 g"],["Butter","🧈",58,"100 g"],["Cheese","🧀",120,"200 g"],["Fresh Cream","🥛",65,"250 ml"],["Buttermilk","🥛",25,"500 ml"],["Ghee","🫙",180,"500 ml"],["Eggs","🥚",75,"6 pcs"],["Flavoured Milk","🥛",35,"200 ml"],["Lassi","🥤",30,"250 ml"],["Yogurt","🥣",45,"100 g"]],
+"Rice & Atta":[["Basmati Rice","🍚",95,"1 kg"],["Regular Rice","🍚",55,"1 kg"],["Wheat Atta","🌾",55,"1 kg"],["Multigrain Atta","🌾",75,"1 kg"],["Maida","🌾",40,"1 kg"],["Besan","🟡",85,"1 kg"],["Poha","🥣",45,"500 g"],["Sooji","🌾",40,"500 g"],["Dalia","🥣",45,"500 g"],["Brown Rice","🍚",100,"1 kg"],["Idli Rice","🍚",65,"1 kg"],["Corn Flour","🌽",50,"500 g"]],
+"Pulses & Dal":[["Toor Dal","🫘",130,"1 kg"],["Moong Dal","🫘",115,"1 kg"],["Masoor Dal","🫘",95,"1 kg"],["Chana Dal","🫘",85,"1 kg"],["Urad Dal","🫘",110,"1 kg"],["Kabuli Chana","🫘",100,"1 kg"],["Rajma","🫘",120,"1 kg"],["Black Chana","🫘",75,"1 kg"],["Green Moong","🫘",90,"1 kg"],["White Peas","🫘",80,"1 kg"],["Soybean","🫘",75,"1 kg"],["Mixed Dal","🫘",110,"1 kg"]],
+"Cooking Essentials":[["Sunflower Oil","🫗",145,"1 L"],["Mustard Oil","🫗",160,"1 L"],["Olive Oil","🫒",280,"500 ml"],["Sugar","🧂",45,"1 kg"],["Jaggery","🟤",55,"500 g"],["Salt","🧂",25,"1 kg"],["Turmeric","🟡",35,"100 g"],["Red Chilli Powder","🌶️",45,"100 g"],["Cumin Seeds","🌿",40,"100 g"],["Coriander Powder","🌿",35,"100 g"],["Garam Masala","🌶️",55,"100 g"],["Black Pepper","⚫",65,"50 g"]],
+"Snacks":[["Potato Chips","🍟",20,"1 pack"],["Biscuits","🍪",30,"1 pack"],["Namkeen","🥨",35,"200 g"],["Chocolate","🍫",40,"1 pc"],["Cookies","🍪",60,"1 pack"],["Popcorn","🍿",35,"1 pack"],["Peanuts","🥜",45,"200 g"],["Rusk","🍞",40,"1 pack"],["Instant Noodles","🍜",15,"1 pack"],["Crackers","🥨",35,"1 pack"],["Energy Bar","🍫",40,"1 pc"],["Trail Mix","🥜",90,"200 g"]],
+"Beverages":[["Water","💧",20,"1 L"],["Orange Juice","🧃",80,"1 L"],["Apple Juice","🧃",90,"1 L"],["Cola","🥤",40,"750 ml"],["Lemon Soda","🥤",35,"500 ml"],["Green Tea","🍵",120,"25 bags"],["Black Tea","🍵",140,"250 g"],["Coffee","☕",160,"100 g"],["Coconut Water","🥥",45,"200 ml"],["Mango Drink","🧃",35,"600 ml"],["Hot Chocolate","☕",150,"200 g"],["Syrup","🧃",110,"750 ml"]],
+"Bakery":[["White Bread","🍞",35,"1 loaf"],["Brown Bread","🍞",45,"1 loaf"],["Burger Buns","🍔",40,"4 pcs"],["Pav","🍞",30,"6 pcs"],["Croissant","🥐",45,"1 pc"],["Muffin","🧁",40,"1 pc"],["Cake Rusk","🍞",55,"200 g"],["Pizza Base","🍕",50,"2 pcs"],["Tortilla","🫓",60,"6 pcs"],["Garlic Bread","🥖",75,"1 pack"],["Donut","🍩",45,"1 pc"],["Fruit Cake","🍰",90,"250 g"]],
+"Personal Care":[["Bath Soap","🧼",35,"1 pc"],["Shampoo","🧴",120,"180 ml"],["Conditioner","🧴",140,"180 ml"],["Toothpaste","🪥",65,"150 g"],["Toothbrush","🪥",35,"1 pc"],["Face Wash","🧴",110,"100 ml"],["Body Lotion","🧴",160,"200 ml"],["Hand Wash","🧼",75,"200 ml"],["Hair Oil","🧴",90,"200 ml"],["Deodorant","🧴",150,"150 ml"],["Talcum Powder","🧴",85,"100 g"],["Lip Balm","💄",45,"1 pc"]],
+"Household":[["Dishwash Liquid","🧽",110,"500 ml"],["Laundry Detergent","🧺",125,"1 kg"],["Floor Cleaner","🧹",115,"1 L"],["Toilet Cleaner","🧴",95,"500 ml"],["Garbage Bags","🗑️",60,"30 pcs"],["Tissues","🧻",45,"1 pack"],["Kitchen Sponge","🧽",25,"2 pcs"],["Aluminium Foil","🧻",80,"1 roll"],["Paper Towels","🧻",65,"2 rolls"],["Mosquito Repellent","🦟",110,"1 pack"],["Air Freshener","🌸",140,"1 pc"],["Scrub Pad","🧽",30,"3 pcs"]],
+"Frozen & Ready":[["Frozen Peas","🫛",90,"500 g"],["Frozen Corn","🌽",85,"500 g"],["French Fries","🍟",120,"500 g"],["Veg Nuggets","🍗",150,"400 g"],["Frozen Paratha","🫓",100,"5 pcs"],["Veg Momos","🥟",130,"1 pack"],["Spring Rolls","🥟",140,"1 pack"],["Paneer Tikka","🧀",180,"1 pack"],["Ice Cream","🍨",120,"500 ml"],["Frozen Pizza","🍕",180,"1 pc"],["Ready Poha","🥣",60,"1 pack"],["Instant Soup","🍲",35,"1 pack"]]
+};
+const KEY="groceryhub_v2";
+const seed=()=>Object.entries(raw).flatMap(([cat,items])=>items.map((x,i)=>({id:cat.replace(/\W/g,"")+i+Math.random().toString(36).slice(2,6),name:x[0],emoji:x[1],price:x[2],unit:x[3],cat,stock:20})));
+let products=seed(),cart={},orders=[];
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s){products=s.products||products;cart=s.cart||{};orders=s.orders||[]}}catch(e){}
+let category="All";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:2});
+function save(){try{localStorage.setItem(KEY,JSON.stringify({products,cart,orders}))}catch(e){}}
+function go(p){document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));document.getElementById(p).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.p===p));if(p==="cart")renderCart();if(p==="orders")renderOrders();if(p==="admin")renderAdmin();scrollTo(0,0)}
+function initCats(){document.getElementById("cats").innerHTML=["All",...Object.keys(raw)].map(c=>`<button class="${category===c?"active":""}" onclick="setCat('${esc(c)}')">${esc(c)}</button>`).join("");document.getElementById("nc").innerHTML=Object.keys(raw).map(c=>`<option>${esc(c)}</option>`).join("")}
+function setCat(c){category=c;initCats();render()}
+function render(){
+const q=document.getElementById("search").value.toLowerCase().trim();
+const list=products.filter(p=>(category==="All"||p.cat===category)&&(!q||(p.name+" "+p.cat).toLowerCase().includes(q)));
+document.getElementById("result").textContent="("+list.length+")";
+document.getElementById("products").innerHTML=list.map(p=>`<article class="card"><div class="pic">${esc(p.emoji)}</div><h3>${esc(p.name)}</h3><div class="muted">${esc(p.cat)} · ${esc(p.unit)}</div><div class="price">${money(p.price)}</div><div class="muted">${p.stock>0?"In stock":"Sold out"}</div><button class="add" style="margin-top:8px" ${p.stock<1?"disabled":""} onclick="add('${p.id}')">+ Add to cart</button>${cart[p.id]?`<p class="muted">In cart: ${cart[p.id]}</p>`:""}</article>`).join("")||'<div class="panel">No products found.</div>';
+document.getElementById("count").textContent=Object.values(cart).reduce((a,b)=>a+b,0)
+}
+function add(id){const p=products.find(x=>x.id===id);if(p&&p.stock>0)cart[id]=Math.min(p.stock,(cart[id]||0)+1);save();render()}
+function qty(id,d){const p=products.find(x=>x.id===id),n=(cart[id]||0)+d;if(n<=0)delete cart[id];else cart[id]=Math.min(p.stock,n);save();renderCart();render()}
+function totals(){const sub=products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0),fee=sub===0||sub>=499?0:35;return{sub,fee,total:sub+fee}}
+function renderCart(){
+const list=products.filter(p=>cart[p.id]>0);
+document.getElementById("cartItems").innerHTML=list.length?list.map(p=>`<div class="line"><span style="font-size:27px">${esc(p.emoji)}</span><div class="desc"><b>${esc(p.name)}</b><div class="muted">${money(p.price)} / ${esc(p.unit)}</div></div><div class="qty"><button onclick="qty('${p.id}',-1)">−</button>${cart[p.id]}<button onclick="qty('${p.id}',1)" ${cart[p.id]>=p.stock?"disabled":""}>+</button></div></div>`).join(""):"Your cart is empty.";
+const t=totals();document.getElementById("sub").textContent=money(t.sub);document.getElementById("fee").textContent=money(t.fee);document.getElementById("grand").textContent=money(t.total);document.getElementById("count").textContent=Object.values(cart).reduce((a,b)=>a+b,0)
+}
+function placeOrder(){
+const name=document.getElementById("name").value.trim(),phone=document.getElementById("phone").value.trim(),address=document.getElementById("address").value.trim(),err=document.getElementById("error");
+if(!Object.values(cart).some(n=>n>0)){err.textContent="Your cart is empty.";return}
+if(name.length<2){err.textContent="Enter your name.";return}
+if(!/^[6-9]\d{9}$/.test(phone)){err.textContent="Enter a valid 10-digit Indian mobile number.";return}
+if(address.length<8){err.textContent="Enter your complete address.";return}
+const lines=products.filter(p=>cart[p.id]>0);
+if(lines.some(p=>cart[p.id]>p.stock)){err.textContent="Please check item stock.";return}
+const t=totals(),o={id:"GH"+Date.now().toString().slice(-8),name,phone,address,note:document.getElementById("note").value,items:lines.map(p=>({name:p.name,qty:cart[p.id],price:p.price})),total:t.total,status:"Received",date:new Date().toLocaleString("en-IN")};
+lines.forEach(p=>p.stock-=cart[p.id]);orders.unshift(o);cart={};save();err.textContent="";alert("Demo order placed: "+o.id);go("orders")
+}
+function renderOrders(){document.getElementById("orderList").innerHTML=orders.length?orders.map(o=>`<div class="panel"><b>Order ${esc(o.id)}</b><p class="muted">${esc(o.date)}</p><p>${o.items.map(i=>esc(i.name)+" × "+i.qty).join(", ")}</p><b>${money(o.total)}</b><p>Status: ${esc(o.status)}</p></div>`).join(""):'<div class="panel">No orders yet.</div>'}
+function addProduct(){const name=document.getElementById("nn").value.trim(),price=Number(document.getElementById("np").value),unit=document.getElementById("nu").value.trim(),cat=document.getElementById("nc").value;if(name.length<2||price<=0||!Number.isFinite(price)||!unit){alert("Enter product name, valid price and unit.");return}products.unshift({id:"custom"+Date.now(),name,price,unit,cat,emoji:"🛍️",stock:20});save();render();renderAdmin();document.getElementById("nn").value="";document.getElementById("np").value="";document.getElementById("nu").value="";alert("Product added")}
+function renderAdmin(){
+document.getElementById("pc").textContent=products.length;document.getElementById("oc").textContent=orders.length;document.getElementById("sales").textContent=money(orders.reduce((s,o)=>s+o.total,0));
+const q=(document.getElementById("as").value||"").toLowerCase();
+document.getElementById("at").innerHTML=products.filter(p=>p.name.toLowerCase().includes(q)).slice(0,100).map(p=>`<tr><td>${esc(p.name)}</td><td><input id="p${p.id}" type="number" min="1" value="${p.price}" style="width:80px"></td><td><input id="s${p.id}" type="number" min="0" value="${p.stock}" style="width:65px"></td><td><button onclick="saveProduct('${p.id}')">Save</button></td></tr>`).join("");
+document.getElementById("ao").innerHTML=orders.length?orders.map(o=>`<div class="panel"><b>${esc(o.id)} · ${money(o.total)}</b><p>${esc(o.name)} · ${esc(o.phone)}</p><p>${esc(o.address)}</p><select onchange="status('${o.id}',this.value)">${["Received","Confirmed","Preparing","Out for delivery","Delivered","Cancelled"].map(s=>`<option ${o.status===s?"selected":""}>${s}</option>`).join("")}</select></div>`).join(""):"No orders yet."
+}
+function saveProduct(id){const p=products.find(x=>x.id===id),price=Number(document.getElementById("p"+id).value),stock=Number(document.getElementById("s"+id).value);if(!p||price<=0||!Number.isFinite(price)||!Number.isInteger(stock)||stock<0){alert("Check price and stock.");return}p.price=price;p.stock=stock;save();render();renderAdmin();alert("Product saved")}
+function status(id,s){const o=orders.find(x=>x.id===id);if(o){o.status=s;save();renderOrders();renderAdmin()}}
+function resetDemo(){if(!confirm("Reset all demo products and orders?"))return;localStorage.removeItem(KEY);products=seed();cart={};orders=[];save();initCats();render();renderAdmin();renderOrders();alert("Demo reset")}
+initCats();render();
+</script>
+</body>
+</html>
