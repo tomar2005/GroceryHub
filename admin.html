@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GroceryHub Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f8f2;color:#183322}
+header{background:#07552e;color:white;padding:20px}
+header h1{margin:0}
+main{max-width:900px;margin:auto;padding:18px}
+.card{background:white;padding:18px;margin:15px 0;border-radius:14px;box-shadow:0 2px 10px #0001}
+input,button{width:100%;padding:12px;margin:7px 0;border-radius:8px;font-size:16px}
+input{border:1px solid #ccc}
+button{border:0;background:#07552e;color:white;font-weight:bold}
+.secondary{background:#e5eee7;color:#183322}
+.notice{padding:12px;background:#fff3cd;border-radius:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<h1>🛒 GroceryHub Admin</h1>
+<p>Store Management Dashboard</p>
+</header>
+<main>
+<div class="notice">
+<strong>ध्यान दें:</strong> यह शुरुआती Admin Panel है।
+अभी इसमें बदलाव केवल इसी पेज पर दिखेंगे।
+Supabase से जोड़ने और एडमिन लॉगिन सुरक्षित करने के बाद ही
+प्रोडक्ट वास्तव में डेटाबेस में सेव होंगे।
+</div>
+<div class="card">
+<h2>➕ नया प्रोडक्ट जोड़ें</h2>
+<form id="productForm">
+<input id="name" placeholder="प्रोडक्ट का नाम" required>
+<input id="category" placeholder="कैटेगरी" required>
+<input id="price" type="number" min="0" step="0.01" placeholder="कीमत ₹" required>
+<input id="unit" placeholder="यूनिट, जैसे 1 kg या 1 packet" required>
+<input id="stock" type="number" min="0" step="1" placeholder="स्टॉक" required>
+<input id="image" type="url" placeholder="इमेज URL (वैकल्पिक)">
+<button type="submit">प्रोडक्ट जोड़ें</button>
+</form>
+</div>
+<div class="card">
+<h2>📦 प्रोडक्ट और स्टॉक</h2>
+<div id="products">अभी कोई प्रोडक्ट नहीं जोड़ा गया।</div>
+<button class="secondary" id="clear">इस पेज की सूची साफ करें</button>
+</div>
+<div class="card">
+<h2>🧾 ऑर्डर</h2>
+<p>ऑर्डर दिखाने के लिए Supabase कनेक्शन और सुरक्षित अनुमति सेटअप करना बाकी है।</p>
+</div>
+</main>
+<script>
+const products=[];
+const list=document.getElementById('products');
+function render(){
+ if(!products.length){
+  list.textContent='अभी कोई प्रोडक्ट नहीं जोड़ा गया।';
+  return;
+ }
+ list.replaceChildren();
+ products.forEach((p,i)=>{
+  const box=document.createElement('div');
+  box.style.cssText='border-top:1px solid #ddd;padding:12px 0';
+  const title=document.createElement('strong');
+  title.textContent=p.name+' — ₹'+p.price;
+  const details=document.createElement('p');
+  details.textContent=p.category+' | '+p.unit+' | स्टॉक: '+p.stock;
+  box.append(title,details);
+  if(p.image){
+   const img=document.createElement('img');
+   img.src=p.image;img.alt=p.name;
+   img.style.cssText='max-width:100px;max-height:100px';
+   box.append(img);
+  }
+  const edit=document.createElement('button');
+  edit.textContent='कीमत / स्टॉक बदलें';
+  edit.onclick=()=>{
+   const price=prompt('नई कीमत',p.price);
+   if(price===null)return;
+   const stock=prompt('नया स्टॉक',p.stock);
+   if(stock===null)return;
+   if(price.trim()===''||!Number.isFinite(Number(price))||Number(price)<0||
+      stock.trim()===''||!Number.isInteger(Number(stock))||Number(stock)<0){
+    alert('सही कीमत और स्टॉक डालें।');return;
+   }
+   p.price=Number(price);p.stock=Number(stock);render();
+  };
+  const remove=document.createElement('button');
+  remove.className='secondary';
+  remove.textContent='हटाएँ';
+  remove.onclick=()=>{products.splice(i,1);render();};
+  box.append(edit,remove);
+  list.append(box);
+ });
+}
+document.getElementById('productForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ products.push({
+  name:document.getElementById('name').value.trim(),
+  category:document.getElementById('category').value.trim(),
+  price:Number(document.getElementById('price').value),
+  unit:document.getElementById('unit').value.trim(),
+  stock:Number(document.getElementById('stock').value),
+  image:document.getElementById('image').value.trim()
+ });
+ render();e.target.reset();
+});
+document.getElementById('clear').onclick=()=>{
+ if(confirm('इस पेज की सभी अस्थायी प्रोडक्ट एंट्री हटाएँ?')){
+  products.length=0;render();
+ }
+};
+</script>
+</body>
+</html>
